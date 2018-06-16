@@ -1,11 +1,11 @@
 NVCC=/usr/local/cuda/bin/nvcc
-NVCCFLAGS=-arch sm_50 -O3
+NVCCFLAGS=-arch sm_50 -O3 -std=c++11 --expt-extended-lambda
 
 MGPU=3rdparty/moderngpu
-MGPUFLAGS=-I $(MGPU)/include $(MGPU)/src/mgpucontext.cu $(MGPU)/src/mgpuutil.cpp
+MGPUFLAGS=-I $(MGPU)/src/
 
 CXX=g++
-CXXFLAGS=-O3
+CXXFLAGS=-O3 -std=c++11
 
 all: bfs-mgpu.e dimacs-parser.e
 
