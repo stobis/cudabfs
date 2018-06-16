@@ -15,6 +15,8 @@ using namespace std;
 
 #include "bfs-mgpu.cuh"
 
+namespace bfs_mgpu {
+
 __global__ void UpdateDistanceAndVisitedKernel(const int* __restrict__ frontier,
                                                int frontier_size, int d,
                                                int* distance, int* visited) {
@@ -139,54 +141,54 @@ void ParallelBFS(int n, int m, mem_t<int>& nodes, mem_t<int>& edges, int source,
 // typedef unsigned long long uint64_t;
 
 uint64_t CalculateChecksum(const vector<int>& distance) {
-  uint64_t checksum = 0;
-  for (int i = 0; i < distance.size(); ++i)
-    if (distance[i] != -1)
-      checksum += (uint64_t)i * (uint64_t)distance[i];
-  return checksum;
+    uint64_t checksum = 0;
+    for (int i = 0; i < distance.size(); ++i)
+        if (distance[i] != -1) checksum += (uint64_t)i * (uint64_t)distance[i];
+    return checksum;
 }
 
 uint64_t Time() {
-  timespec tp;
-  clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
-  return (tp.tv_nsec + (uint64_t)1000000000 * tp.tv_sec) / 1000000;
+    timespec tp;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &tp);
+    return (tp.tv_nsec + (uint64_t)1000000000 * tp.tv_sec) / 1000000;
 }
 
-uint64_t ParallelBFS(
-    const vector<int>& nodes, const vector<int>& edges, int source) {
-  standard_context_t context(false);
-  mem_t<int> dev_nodes = to_mem(nodes, context);
-  mem_t<int> dev_edges = to_mem(edges, context);
-  mem_t<int> dev_distance = mgpu::fill<int>(-1, nodes.size() - 1, context);
-  uint64_t t = Time();
-  ParallelBFS(
-      nodes.size() - 1, edges.size(), dev_nodes, dev_edges, source,
-      dev_distance, context);
-  t = Time() - t;
-  cerr << "GPU: " << t << " ms" << endl;
-  vector<int> distance = from_mem(dev_distance);
-  return CalculateChecksum(distance);
+uint64_t ParallelBFS(const vector<int>& nodes, const vector<int>& edges,
+                     int source) {
+    standard_context_t context(false);
+    mem_t<int> dev_nodes = to_mem(nodes, context);
+    mem_t<int> dev_edges = to_mem(edges, context);
+    mem_t<int> dev_distance = mgpu::fill<int>(-1, nodes.size() - 1, context);
+    uint64_t t = Time();
+    ParallelBFS(nodes.size() - 1, edges.size(), dev_nodes, dev_edges, source,
+                dev_distance, context);
+    t = Time() - t;
+    cerr << "GPU: " << t << " ms" << endl;
+    vector<int> distance = from_mem(dev_distance);
+    return CalculateChecksum(distance);
 }
 
-uint64_t SequentialBFS(
-    const vector<int>& nodes, const vector<int>& edges, int source) {
-  vector<int> distance(nodes.size() - 1, -1);
-  uint64_t t = Time();
-  distance[source] = 0;
-  queue<int> q;
-  q.push(source);
-  while (!q.empty()) {
-    int u = q.front();
-    q.pop();
-    for (int i = nodes[u]; i < nodes[u + 1]; ++i) {
-      int v = edges[i];
-      if (distance[v] == -1) {
-        distance[v] = distance[u] + 1;
-        q.push(v);
-      }
+uint64_t SequentialBFS(const vector<int>& nodes, const vector<int>& edges,
+                       int source) {
+    vector<int> distance(nodes.size() - 1, -1);
+    uint64_t t = Time();
+    distance[source] = 0;
+    queue<int> q;
+    q.push(source);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int i = nodes[u]; i < nodes[u + 1]; ++i) {
+            int v = edges[i];
+            if (distance[v] == -1) {
+                distance[v] = distance[u] + 1;
+                q.push(v);
+            }
+        }
     }
-  }
-  t = Time() - t;
-  cerr << "CPU: " << t << " ms" << endl;
-  return CalculateChecksum(distance);
+    t = Time() - t;
+    cerr << "CPU: " << t << " ms" << endl;
+    return CalculateChecksum(distance);
 }
+
+}  // namespace bfs_mgpu

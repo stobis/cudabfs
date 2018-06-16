@@ -3,18 +3,18 @@
 
 #include <moderngpu/context.hxx>
 #include <moderngpu/memory.hxx>
-using namespace mgpu;
 
 #include <vector>
-using namespace std;
 
-void ParallelBFS(int n, int m, mem_t<int>& nodes, mem_t<int>& edges, int source,
-                 mem_t<int>& distance, context_t& context);
+namespace bfs_mgpu {
 
-uint64_t ParallelBFS(const vector<int>& nodes, const vector<int>& edges,
-                     int source);
+void ParallelBFS(int, int, mgpu::mem_t<int>&, mgpu::mem_t<int>&, int,
+                 mgpu::mem_t<int>&, mgpu::context_t&);
 
-uint64_t SequentialBFS(const vector<int>& nodes, const vector<int>& edges, 
-                        int source);
+uint64_t ParallelBFS(const std::vector<int>&, const std::vector<int>&, int);
+
+uint64_t SequentialBFS(const std::vector<int>&, const std::vector<int>&, int);
+
+}  // namespace bfs_mgpu
 
 #endif  // BFS_MGPU_CUH
