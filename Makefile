@@ -9,13 +9,13 @@ CXXFLAGS=-O3 -std=c++11
 
 all: bfs-mgpu.e dimacs-parser.e
 
-bfs-mgpu.e: bfs-mgpu.cu
-	$(NVCC) $(NVCCFLAGS) $(MGPUFLAGS) $< -o $@
+bfs-mgpu.e: bfs-mgpu.cu runner.cu
+	$(NVCC) $(NVCCFLAGS) $(MGPUFLAGS) $^ -o $@
 
 dimacs-parser.e: dimacs-parser.cpp
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 clean:
-	rm -f *.e
+	rm -f *.e *.o
 
 .PHONY: all clean
