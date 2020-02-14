@@ -72,6 +72,11 @@ void getMemInfo() {
 
 void ParallelBFS(int n, int m, mem_t<int>& nodes, mem_t<int>& edges, int source,
                  mem_t<int>& distance, context_t& context) {
+    ParallelBFS(n, m, nodes.data(), edges.data(), source, distance.data(), context);
+}
+
+void ParallelBFS(int n, int m, int const* nodes, int const* edges, int source,
+                 int * distance, context_t& context) {
     mem_t<int> visited = mgpu::fill<int>(0, (n + 31) / 32, context);
     mem_t<int> parent = mgpu::fill<int>(-1, n, context);
     mem_t<int> node_frontier(n, context);
@@ -90,11 +95,11 @@ void ParallelBFS(int n, int m, mem_t<int>& nodes, mem_t<int>& edges, int source,
     int edge_frontier_size = 0;
     for (int d = 0; node_frontier_size > 0; ++d) {
         UpdateDistanceAndVisitedKernel<<<128, 128, 0, context.stream()>>>(
-            node_frontier.data(), node_frontier_size, d, distance.data(),
+            node_frontier.data(), node_frontier_size, d, distance,
             visited.data());
         CalculateFrontierStartsAndDegreesKernel<<<128, 128, 0,
                                                   context.stream()>>>(
-            nodes.data(), node_frontier.data(), node_frontier_size,
+            nodes, node_frontier.data(), node_frontier_size,
             node_frontier_starts.data(), node_frontier_degrees.data());
 
         // hacking a bit
@@ -109,7 +114,7 @@ void ParallelBFS(int n, int m, mem_t<int>& nodes, mem_t<int>& edges, int source,
              node_frontier_degrees.data() + node_frontier_size - 1, 1);
         edge_frontier_size += tmp_subarray.front();
 
-        interval_gather(edges.data(), edge_frontier_size,
+        interval_gather(edges, edge_frontier_size,
                         node_frontier_degrees.data(), node_frontier_size,
                         node_frontier_starts.data(), edge_frontier.data(),
                         context);

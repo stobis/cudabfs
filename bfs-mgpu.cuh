@@ -8,6 +8,9 @@
 
 namespace bfs_mgpu {
 
+void ParallelBFS(int, int, int const*, int const*, int,
+    int *, mgpu::context_t&);
+
 void ParallelBFS(int, int, mgpu::mem_t<int>&, mgpu::mem_t<int>&, int,
                  mgpu::mem_t<int>&, mgpu::context_t&);
 
